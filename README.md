@@ -3,7 +3,9 @@ ImoSPC
 
 ImoSPC provides an API for playing [SPC] files and Zip archives, as well as reading SPC metadata, using JavaScript.
 
-For more information, see: <https://github.com/ShadowFan-X/ImoSPC/wiki>
+- [More Information](https://github.com/ShadowFan-X/ImoSPC/wiki)
+
+- [API reference](https://github.com/ShadowFan-X/ImoSPC/wiki/API-Reference)
 
 License
 -------
