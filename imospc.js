@@ -349,7 +349,9 @@
 	/** @const */ var E_UNKNOWN_FILE_TYPE		= 'unknown file type';
 	/** @const */ var E_BAD_URL					= 'invalid url';
 	/** @const */ var E_DOWNLOAD_ERROR			= 'download error';
-	/** @const */ var E_SECURITY_ERROR			= 'crossdomain';
+	// Can't distinguish between CORS errors and other errors with XHR, so don't
+	// do it with Flash, either. Use E_DOWNLOAD_ERROR instead.
+	///** @const */ var E_SECURITY_ERROR			= 'crossdomain';
 	/** @const */ var E_DOWNLOAD_ABORTED		= 'download aborted';
 	/** @const */ var E_IO						= 'io error';
 	/** @const */ var E_PATH_NOT_FOUND			= 'path not found in archive';
@@ -366,7 +368,7 @@
 		'UNKNOWN_FILE_TYPE':		E_UNKNOWN_FILE_TYPE,
 		'BAD_URL':					E_BAD_URL,
 		'DOWNLOAD_ERROR':			E_DOWNLOAD_ERROR,
-		'SECURITY_ERROR':			E_SECURITY_ERROR,
+		//'SECURITY_ERROR':			E_SECURITY_ERROR,
 		'DOWNLOAD_ABORTED':			E_DOWNLOAD_ABORTED,
 		'IO_ERROR':					E_IO,
 		'PATH_NOT_FOUND':			E_PATH_NOT_FOUND,
@@ -764,13 +766,13 @@
 		'unpause': function() { trackfn(this); return isCurrentTrack(this) ? _unpause() : false; },
 		'stop': function() { trackfn(this); return isCurrentTrack(this) ? _stop() : false; },
 		'time': function() { trackfn(this); return areTracksEqual(_curTrack, this) ? _getTime() : -1; },
-		'seek': function(to, abs) {
+		'seek': function(to, relative) {
 			trackfn(this);
 			if (isNaN(to)) throw new TypeError('to must be a number.');
-			if (areTracksEqual(_curTrack, this) && (to || abs)) {
+			if (areTracksEqual(_curTrack, this) && (to || !relative)) {
 				var time = _getTime();
 				if (time >= 0) {
-					if (!abs) to += time;
+					if (relative) to += time;
 					_play(to, _curPlaylist ? _curTrackIndex : _curTrack, _curPlaylist);
 					return true;
 				}
@@ -1172,7 +1174,7 @@
 						// Pass errors onto the caller
 						var e = ECONV[data['e']] || E_UNKNOWN;
 						var status = e === E_DOWNLOAD_ERROR ? data['code'] : undefined_;
-						imoInvokeLoadError(new ImoLoadEvent(url, userdata, undefined_, undefined_, corruptFiles, e, status));
+						imoInvokeLoadError(new ImoLoadEvent(url, userdata, undefined_, undefined_, corruptFiles, e, status || undefined_));
 						if (url === pendingPlayUrl)
 							pendingPlayUrl = pendingPlayTrack =
 								pendingPlayPlaylist = pendingPlayTrackIndex = null_;
@@ -1939,7 +1941,7 @@
 				'unkty': E_UNKNOWN_FILE_TYPE,
 				'badurl': E_BAD_URL,
 				'dlerr': E_DOWNLOAD_ERROR,
-				'security': E_SECURITY_ERROR,
+				'security': E_DOWNLOAD_ERROR,
 				'dlabt': E_DOWNLOAD_ABORTED, // not used
 				'nofile': E_PATH_NOT_FOUND,
 				'io': E_IO
@@ -2007,7 +2009,7 @@
 				}
 				switch (e) {
 					case E_DOWNLOAD_ERROR:
-						httpStatus = +extra;
+						httpStatus = +extra || undefined_;
 						break;
 					case E_INVALID_SPC:
 					case E_EMPTY_ARCHIVE:
