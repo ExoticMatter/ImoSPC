@@ -1,0 +1,3 @@
+[submodule "imospc"]
+	path = imospc
+	url = https://github.com/ShadowFan-X/ImoSPC.git
