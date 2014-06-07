@@ -1,4 +1,4 @@
-var row = $('<table class="toolbar ui-widget-header ui-corner-all"></table>').appendTo('#mediacontrols');
+var row = $('<table class="ui-widget-header ui-corner-all" style="font-size: 7pt"></table>').appendTo('#mediacontrols');
 row = $('<tr></tr>').appendTo(row);
 var toolbar = $('<td style="width: 1px; padding: 4px; white-space: nowrap"></td>').appendTo(row);
 
