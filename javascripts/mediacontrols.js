@@ -89,8 +89,8 @@ function replaceWithLink(id) {
 }
 
 var lastBlobU = null,
-    createObjectURL = (window.webkitURL || window.URL).createObjectURL,
-    revokeObjectURL = (window.webkitURL || window.URL).revokeObjectURL;
+    createObjectURL,
+    revokeObjectURL;
 
 function showError(message) {
     $('<div><p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>' + message + '</p></div>').appendTo('body').dialog({
@@ -110,6 +110,8 @@ ImoSPC.oninit = function(e) {
     replaceWithLink('dkq');
 
     if (e.version.runtime !== ImoSPC.Runtime.Flash && 'FileReader' in window) {
+        createObjectURL = (window.webkitURL || window.URL).createObjectURL;
+        revokeObjectURL = (window.webkitURL || window.URL).revokeObjectURL;
         $('#droparea')
             .text('Drop an SPC or Zip file here')
             .on('drop', function(e) {
