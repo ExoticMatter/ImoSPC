@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -10,9 +10,9 @@
     <script src="javascripts/scale.fix.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
-    <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
-    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
 
     <script src="imospc/bin/imospc.js"></script>
 
@@ -36,10 +36,22 @@
         <h1>
 <a name="imospc" class="anchor" href="#imospc"><span class="octicon octicon-link"></span></a>ImoSPC</h1>
 
+<div id="mediacontrols"></div>
+<table><tr>
+<td><strong>Load a playlist</strong>:<ul>
+	<li><div id="smw">Super Mario World</div></li>
+	<li><div id="yi">Yoshi’s Island</div></li>
+	<li><div id="dkq">Diddy Kong’s Quest</div></li>
+</ul></td>
+<td style="width: 50%">
+	<p id="droparea" style="border: 2px dashed #bbb; border-radius: 5px; color: #bbb; padding: 25px; text-align: center; font-weight: bold">(Loading, please wait...)</p>
+</td>
+</tr></table>
+<script src="javascripts/mediacontrols.js"></script>
+<h2>
+<a name="overview" class="anchor" href="#overview"><span class="octicon octicon-link"></span></a>Overview</h2>
 <p>ImoSPC provides an API for playing <a href="http://en.wikipedia.org/wiki/Nintendo_S-SMP#Format">SPC</a> files and Zip archives, as well as reading SPC metadata, using JavaScript.</p>
 
-<div id="mediacontrols"></div>
-<script src="javascripts/mediacontrols.js"></script>
 
 <p>(This page is currently under construction. Once complete, it will host a demo. For now, I will add UI widgets.)</p>
 
