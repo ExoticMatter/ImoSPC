@@ -85,7 +85,7 @@ volumebar = $('<div style="display: inline-block; width: 100px; margin: 0 8px; v
     .appendTo(volumebar);
 
 function replaceWithLink(id) {
-    $('#' + id).replaceWith('<a href="javascript:void(0)" onclick="playtrack(\'http://http://shadowfan-x.github.io/ImoSPC/spcs/' + id + '.zip\')">' + $('#' + id).text() + '</a>');
+    $('#' + id).replaceWith('<a href="javascript:void(0)" onclick="playtrack(\'http://shadowfan-x.github.io/ImoSPC/spcs/' + id + '.zip\')">' + $('#' + id).text() + '</a>');
 }
 
 var lastBlobU = null,
