@@ -110,7 +110,7 @@ ImoSPC.oninit = function(e) {
     replaceWithLink('yi');
     replaceWithLink('dkq');
 
-    if (e.version.runtime !== ImoSPC.Runtime.Flash && 'FileReader' in window) {
+    if (e.version.runtime !== ImoSPC.Runtime.FLASH && 'FileReader' in window) {
         createObjectURL = (window.webkitURL || window.URL).createObjectURL;
         revokeObjectURL = (window.webkitURL || window.URL).revokeObjectURL;
         $('#droparea')
