@@ -104,12 +104,12 @@ function showError(message) {
     });
 }
 
-ImoSPC.oninit = function() {
+ImoSPC.oninit = function(e) {
     replaceWithLink('smw');
     replaceWithLink('yi');
     replaceWithLink('dkq');
 
-    if ('FileReader' in window) {
+    if (e.version.runtime !== ImoSPC.Runtime.Flash && 'FileReader' in window) {
         $('#droparea')
             .text('Drop an SPC or Zip file here')
             .on('drop', function(e) {
@@ -248,7 +248,7 @@ ImoSPC.onplaystatechange = function(e) {
     }
 };
 
-ImoSPC.init({ autostart: true });
+ImoSPC.init({ preferredRuntime: ImoSPC.Runtime.HTML5, autostart: true });
 
 var loadedPlaylists = {};
 function playtrack(url) {
