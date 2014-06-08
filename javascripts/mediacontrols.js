@@ -92,10 +92,11 @@ var lastBlobU = null,
     createObjectURL,
     revokeObjectURL;
 
-function showError(message) {
-    $('<div><p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>' + message + '</p></div>').appendTo('body').dialog({
+function showMessage(message, icon) {
+    $('<div><p><span class="ui-icon ui-icon-' + icon + '" style="float:left; margin:0 7px 20px 0;"></span>' + message + '</p></div>').appendTo('body').dialog({
         resizable: false,
         modal: true,
+        title: 'ImoSPC 2',
         buttons: {
             Close: function() {
                 $(this).dialog('close');
@@ -173,7 +174,7 @@ ImoSPC.oniniterror = function(e) {
         default:
             message = 'ImoSPC could not be initialized.';
     }
-    showError(message);
+    showMessage(message, 'alert');
 };
 
 ImoSPC.onload = function(e) {
@@ -204,7 +205,7 @@ ImoSPC.onloaderror = function(e) {
         default:
             message = 'The file could not be loaded.';
     }
-    showError(message);
+    showMessage(message, 'alert');
 };
 
 ImoSPC.onplaystatechange = function(e) {
@@ -250,7 +251,7 @@ ImoSPC.onplaystatechange = function(e) {
     }
 };
 
-ImoSPC.init({ preferredRuntime: ImoSPC.Runtime.HTML5, autostart: true });
+ImoSPC.init({ preferredRuntime: tryFetch('useFlash') || ImoSPC.Runtime.HTML5, autostart: true });
 
 var loadedPlaylists = {};
 function playtrack(url) {
@@ -330,3 +331,14 @@ function handleLast() {
     var p = ImoSPC.currentPlaylist();
     p.play(p.indexOfLast());
 }
+
+var hasInformedUser;
+function toggleUseFlash(checkbox) {
+    tryStore('useFlash', +checkbox.checked);
+    if (!hasInformedUser) {
+        showMessage('You must refresh your page for the changes to take effect.', 'info');
+        hasInformedUser = true;
+    }
+}
+
+$('#forceFlash').prop('checked', !!tryFetch('useFlash'));
