@@ -117,10 +117,16 @@ ImoSPC.oninit = function() {
                 e.preventDefault();
                 e = e.originalEvent;
 
+                var files = e.dataTransfer.files;
+                if (!files.length) return;
+
                 if (lastBlobU) {
                     revokeObjectURL(lastBlobU);
                     lastBlobU = null;
                 }
+                
+                lastBlobU = createObjectURL(files[0]);
+                ImoSPC.open(lastBlobU);
             })
             .on('dragenter', function(e) {
                 e.stopPropagation();
@@ -166,6 +172,12 @@ ImoSPC.oniniterror = function(e) {
             message = 'ImoSPC could not be initialized.';
     }
     showError(message);
+};
+
+ImoSPC.onload = function(e) {
+    if (!e.url.lastIndexOf('http://', 0)) {
+        loadedPlaylists[e.url] = e.playlist;
+    }
 };
 
 ImoSPC.onloaderror = function(e) {
