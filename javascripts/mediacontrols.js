@@ -296,6 +296,7 @@ function timerOn() {
         if (time < 0) time = 0;
 
         seekbar.progressbar('option', 'value', time);
+        setDisplayedTime(curTimeDisplay, time);
     }, 100);
 }
 
