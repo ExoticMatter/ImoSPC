@@ -40,14 +40,23 @@ var first = makeButton('seek-start', 'Play first track', handleFirst),
     last  = makeButton('seek-end', 'Play last track', handleLast);
 
 var seekbar = $('<td></td>').appendTo(row);
+
+var curTimeDisplay = $('<div style="float: left; text-shadow: 1px 1px 0 #fff; margin: 3px 0 0 4px; display: none"></div>');
+var lengthDisplay = $('<div style="float: right; text-shadow: 1px 1px 0 #fff; margin: 3px 4px 0 0; display: none"></div>');
+
 seekbar = $('<div></div>')
+    .append(curTimeDisplay, lengthDisplay)
     .progressbar({
         max: 1,
         value: 0
     })
     .click(function(e) {
         var track = ImoSPC.currentTrack();
-        if (track) track.seek(((e.pageX - $(this).offset().left) / ($(this).width() - 1)) * track.length);
+        if (track) {
+            var to = ((e.pageX - $(this).offset().left) / ($(this).width() - 1)) * track.length;
+            track.seek(to);
+            setDisplayedTime(curTimeDisplay, to);
+        }
     })
     .appendTo(seekbar);
 
@@ -222,6 +231,10 @@ ImoSPC.onplaystatechange = function(e) {
             stop.button('option', 'disabled', false);
             next.button('option', 'disabled', hasNoNext);
             last.button('option', 'disabled', hasNoNext);
+
+            setDisplayedTime(curTimeDisplay, 0);
+            setDisplayedTime(lengthDisplay, e.track.length);
+
             setIsPlaying(true);
 
         case PS.BUFFERING:
@@ -248,6 +261,8 @@ ImoSPC.onplaystatechange = function(e) {
             next.button('option', 'disabled', true);
             last.button('option', 'disabled', true);
             setIsPlaying(false);
+            setDisplayedTime(curTimeDisplay, null);
+            setDisplayedTime(lengthDisplay, null);
     }
 };
 
@@ -266,6 +281,8 @@ function playtrack(url) {
         next.button('option', 'disabled', true);
         last.button('option', 'disabled', true);
         setIsPlaying(true);
+        setDisplayedTime(curTimeDisplay, null);
+        setDisplayedTime(lengthDisplay, null);
         timerOff(true);
     }
 }
@@ -300,6 +317,26 @@ function setIsPlaying(isPlaying) {
         play.button('option', 'icons', { primary: 'ui-icon-play' });
     }
     _isPlaying = isPlaying;
+}
+
+function formatTime(t) {
+    t = +t;
+    if (isNaN(t)) return 'NaN';
+
+    var seconds = Math.floor(t) % 60,
+        minutes = Math.floor(t / 60) % 60,
+        hours   = Math.floor(t / 3600);
+
+    return (hours ? hours + (minutes < 10 ? ':0' : ':') : '') + minutes + (seconds < 10 ? ':0' : ':') + seconds;
+}
+
+function setDisplayedTime(display, t) {
+    if (t != null) {
+	display.show();
+        display.text(formatTime(t));
+    } else {
+        display.hide();
+    }
 }
 
 function handleFirst() {
