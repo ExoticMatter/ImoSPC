@@ -185,7 +185,7 @@ ImoSPC.onloaderror = function(e) {
         case E.UNKNOWN_FILE_TYPE:
             message = 'The file is invalid. Only SPC and Zip files can be loaded.';
             break;
-        case E.PATH_NOT_FOUND
+        case E.PATH_NOT_FOUND:
             message = 'Something went wrong and the path of a specific file could not be found in the archive.';
             break;
         default:
