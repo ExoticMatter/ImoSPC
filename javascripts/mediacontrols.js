@@ -25,8 +25,8 @@ function makeButton(type, text, handler) {
                 primary: 'ui-icon-' + type
             }
         })
-    .click(handler);
-        .appendTo(toolbar);
+    .click(handler)
+    .appendTo(toolbar);
 
     btn.after(' ');
     return btn;
