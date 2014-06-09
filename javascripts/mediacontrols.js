@@ -385,13 +385,11 @@ function getTickerItemsForMetadata(track, playlist, n) {
     var data = [];
     function tryGet(field, title, alt) {
         if (field = (track[field] || alt)) {
+            if (playlist.length > 1) field += ' (Track #' + ++n + ' of ' + playlist.length + ')';
             data.push(new TickerItem(title, field));
         }
     }
     tryGet('title', 'Now Playing', track.filename);
-    if (playlist.length > 1) {
-        data.push(new TickerItem('Now Playing', 'Track #' + ++n + ' of ' + playlist.length));
-    }
     tryGet('game', 'Game');
     tryGet('artist', 'Artist');
     tryGet('publisher', 'Publisher');
