@@ -26,8 +26,6 @@ function TickerItem(title, text) {
 
         that.css({ position: 'relative' });
 
-        console.log('creating a NEW ticker');
-
         (ele._ticker = function(opt) {
             items = opt.items;
             itemIndex = 0;
