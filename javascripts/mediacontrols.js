@@ -385,7 +385,7 @@ function getTickerItemsForMetadata(track, playlist, n) {
     var data = [];
     function tryGet(field, title, alt) {
         if (field = (track[field] || alt)) {
-            if (title === 'Now Playing' && playlist.length > 1) field += ' (Track #' + ++n + ' of ' + playlist.length + ')';
+            if (title === 'Now Playing' && playlist.length > 1) field += ' (#' + ++n + ' of ' + playlist.length + ')';
             data.push(new TickerItem(title, field));
         }
     }
@@ -399,7 +399,7 @@ function getTickerItemsForMetadata(track, playlist, n) {
             ostInfo += ', Disc ' + track.ostdisc;
         }
         if (track.osttrack) {
-            ostInfo += ' #' + track.osttrack;
+            ostInfo += ', Track #' + track.osttrack;
         }
         data.push(new TickerItem('OST', ostInfo));
     }
