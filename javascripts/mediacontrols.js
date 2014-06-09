@@ -12,6 +12,12 @@ function tryFetch(key, _default) {
     return value != null && !isNaN(value = +value) ? value : _default;
 }
 
+var ticker = $('<div class="ui-widget-header ui-corner-top" style="font-weight:normal"></div>')
+    .ticker({
+        items: [new TickerItem('No Track')]
+    })
+    .appendTo('#mediacontrols');
+
 var row = $('<table class="ui-widget-header ui-corner-all" style="font-size: 10px"></table>').appendTo('#mediacontrols');
 row = $('<tr></tr>').appendTo(row);
 var toolbar = $('<td style="width: 1px; padding: 4px; white-space: nowrap"></td>').appendTo(row);
@@ -236,6 +242,7 @@ ImoSPC.onplaystatechange = function(e) {
             setDisplayedTime(lengthDisplay, e.track.length);
 
             setIsPlaying(true);
+            ticker.ticker({ items: getTickerItemsForMetadata(e.track, e.playlist, e.index) });
 
         case PS.BUFFERING:
             timerOff(true);
@@ -263,6 +270,7 @@ ImoSPC.onplaystatechange = function(e) {
             setIsPlaying(false);
             setDisplayedTime(curTimeDisplay, null);
             setDisplayedTime(lengthDisplay, null);
+            ticker.ticker({ items: [new TickerItem('No Track')] });
     }
 };
 
@@ -284,6 +292,9 @@ function playtrack(url) {
         setDisplayedTime(curTimeDisplay, null);
         setDisplayedTime(lengthDisplay, null);
         timerOff(true);
+        ticker.ticker({
+            items: [new TickerItem('Loading...')]
+        });
     }
 }
 
@@ -368,6 +379,33 @@ function handleNext() {
 function handleLast() {
     var p = ImoSPC.currentPlaylist();
     p.play(p.indexOfLast());
+}
+
+function getTickerItemsForMetadata(track, playlist, n) {
+    var data = [];
+    function tryGet(field, title, alt) {
+        if (field = (track[field] || alt)) {
+            data.push(new TickerItem(title, field));
+        }
+    }
+    tryGet('title', 'Now Playing', track.filename);
+    if (playlist.length > 1) {
+        data.push(new TickerItem('Now Playing', 'Track #' + ++n + ' of ' + playlist.length));
+    }
+    tryGet('game', 'Game');
+    tryGet('artist', 'Artist');
+    tryGet('publisher', 'Publisher');
+    var ostInfo = track.osttitle;
+    if (ostInfo) {
+        if (track.ostdisc) {
+            ostInfo += ', Disc ' + track.ostdisc;
+        }
+        if (track.osttrack) {
+            ostInfo += ' #' + track.osttrack;
+        }
+        data.push(new TickerItem('OST', ostInfo));
+    }
+    return data;
 }
 
 var hasInformedUser;
