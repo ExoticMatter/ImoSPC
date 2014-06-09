@@ -385,7 +385,7 @@ function getTickerItemsForMetadata(track, playlist, n) {
     var data = [];
     function tryGet(field, title, alt) {
         if (field = (track[field] || alt)) {
-            if (field === 'title' && playlist.length > 1) field += ' (Track #' + ++n + ' of ' + playlist.length + ')';
+            if (title === 'Now Playing' && playlist.length > 1) field += ' (Track #' + ++n + ' of ' + playlist.length + ')';
             data.push(new TickerItem(title, field));
         }
     }
