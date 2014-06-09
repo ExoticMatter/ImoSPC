@@ -66,6 +66,8 @@ seekbar = $('<div></div>')
     })
     .appendTo(seekbar);
 
+seekbar.find('.ui-progressbar-value').css('background', '#ccc');
+
 var volumebar = $('<td style="width: 1px; padding: 4px; white-space: nowrap"></td>').appendTo(row);
 
 var muteBtn = $('<input type="checkbox" id="mute" checked="1">').appendTo(volumebar);
