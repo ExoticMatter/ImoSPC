@@ -18,9 +18,9 @@ var ticker = $('<div class="ui-widget-header ui-corner-top" style="font-weight:n
     })
     .appendTo('#mediacontrols');
 
-var row = $('<table class="ui-widget-header ui-corner-all" style="font-size: 10px"></table>').appendTo('#mediacontrols');
+var row = $('<table class="ui-widget-header ui-corner-bottom" style="font-size: 10px; display: block"></table>').appendTo('#mediacontrols');
 row = $('<tr></tr>').appendTo(row);
-var toolbar = $('<td style="width: 1px; padding: 4px; white-space: nowrap"></td>').appendTo(row);
+var toolbar = $('<td style="padding: 4px; white-space: nowrap"></td>').appendTo(row);
 
 function makeButton(type, text, handler) {
     var btn = $('<button>' + text + '</button>')
@@ -45,7 +45,7 @@ var first = makeButton('seek-start', 'Play first track', handleFirst),
     next  = makeButton('seek-next', 'Play next track', handleNext),
     last  = makeButton('seek-end', 'Play last track', handleLast);
 
-var seekbar = $('<td></td>').appendTo(row);
+var seekbar = $('<td style="width: 100%"></td>').appendTo(row);
 
 var curTimeDisplay = $('<div style="float: left; text-shadow: 1px 1px 0 #fff; margin: 3px 0 0 4px; display: none"></div>');
 var lengthDisplay = $('<div style="float: right; text-shadow: 1px 1px 0 #fff; margin: 3px 4px 0 0; display: none"></div>');
@@ -68,7 +68,7 @@ seekbar = $('<div></div>')
 
 seekbar.find('.ui-progressbar-value').css('background', '#ccc');
 
-var volumebar = $('<td style="width: 1px; padding: 4px; white-space: nowrap"></td>').appendTo(row);
+var volumebar = $('<td style="padding: 4px; white-space: nowrap"></td>').appendTo(row);
 
 var muteBtn = $('<input type="checkbox" id="mute" checked="1">').appendTo(volumebar);
 muteBtn.after('<label for="mute">Mute</label>');
@@ -89,7 +89,7 @@ muteBtn.button({
     }
 });
 
-volumebar = $('<div style="display: inline-block; width: 100px; margin: 0 8px; vertical-align: middle;"></div>')
+volumebar = $('<div style="display: inline-block; width: 100px; margin: 0 12px; vertical-align: middle;"></div>')
     .slider({
         range: 'min',
         value: tryFetch('volume', 100),
@@ -223,6 +223,17 @@ ImoSPC.onloaderror = function(e) {
             message = 'The file could not be loaded.';
     }
     showMessage(message, 'alert');
+    timerOff();
+    setIsPlaying(false);
+    first.button('option', 'disabled', true);
+    prev.button('option', 'disabled', true);
+    play.button('option', 'disabled', true);
+    stop.button('option', 'disabled', true);
+    next.button('option', 'disabled', true);
+    last.button('option', 'disabled', true);
+    setDisplayedTime(curTimeDisplay, null);
+    setDisplayedTime(lengthDisplay, null);
+    ticker.ticker({ items: [new TickerItem('No Track')] });
 };
 
 ImoSPC.onplaystatechange = function(e) {
@@ -269,7 +280,6 @@ ImoSPC.onplaystatechange = function(e) {
             stop.button('option', 'disabled', true);
             next.button('option', 'disabled', true);
             last.button('option', 'disabled', true);
-            setIsPlaying(false);
             setDisplayedTime(curTimeDisplay, null);
             setDisplayedTime(lengthDisplay, null);
             ticker.ticker({ items: [new TickerItem('No Track')] });

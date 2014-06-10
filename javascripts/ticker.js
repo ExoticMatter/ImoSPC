@@ -17,7 +17,7 @@ function TickerItem(title, text) {
         var that = $(this), ele = that.get(0),
             items, itemIndex, itemTimer,
             currentItem, previousItem,
-            height = -1;
+            height = -1, itemsToolTip;
         
         if (ele._ticker) {
             ele._ticker(opt);
@@ -25,6 +25,11 @@ function TickerItem(title, text) {
         }
 
         that.css({ position: 'relative' });
+        that.tooltip({
+            content: function() {
+                return itemsToolTip;
+            }
+        });
 
         (ele._ticker = function(opt) {
             items = opt.items;
@@ -33,6 +38,16 @@ function TickerItem(title, text) {
             advanceTicker();
             if (itemTimer) clearInterval(itemTimer), itemTimer = null;
             if (itemIndex) itemTimer = setInterval(advanceTicker, opt.length || 4000);
+
+            var title = '';
+            var titleRaw = '';
+            for (var i = -1, ii = items.length; ++i < ii;) {
+                var item = items[i];
+                title += item.element.html() + '<br />';
+                titleRaw += item.title + (item.text ? ': ' + item.text : '') + '\n';
+            }
+            that.prop('title', titleRaw);
+            itemsToolTip = title;
         })(opt);
 
         function advanceTicker() {
