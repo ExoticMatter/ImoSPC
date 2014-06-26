@@ -138,7 +138,7 @@ package
 			nextEOFError = null;
 			_isComplete = true;
 			_hasFailed = true;
-			ExternalInterface.call("ImoSPC._onloaderror", url, reason, extra);
+			ExternalInterface.call("ImoSPC._onloaderror", JSONHelper.escape(url), reason, typeof extra === "string" ? JSONHelper.escape(extra) : extra);
 			
 			if (connected) {
 				try { close(); }

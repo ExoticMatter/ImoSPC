@@ -14,10 +14,6 @@ package
 	public class main extends Sprite {
 		private var spc:SPC;
 		private var loader:Loader;
-
-		private function jslog(text: String) : void {
-			ExternalInterface.call("console.log", text);
-		}
 		
 		public function main() {
 			Security.allowDomain("*");

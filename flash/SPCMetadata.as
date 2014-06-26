@@ -150,10 +150,9 @@ package
 				nLoops:int,
 				ostTrack:int = -1;
 
-import flash.external.ExternalInterface;
 			while (data.position < end && data.bytesAvailable >= XID6_MIN_FIELDSIZE) {
 				var field:int = data.readByte();
-ExternalInterface.call("console.log", "Read tag: 0x" + field.toString(16).toUpperCase());
+
 				var type:int = data.readByte();
 				var length:int = data.readUnsignedShort();
 				// SPC spec says strings cannot be longer than 256 bytes
@@ -164,7 +163,6 @@ ExternalInterface.call("console.log", "Read tag: 0x" + field.toString(16).toUppe
 				var next:uint = 0;
 				if (type !== XID6_TYPE_LENGTH) {
 					if (data.bytesAvailable < length) {
-ExternalInterface.call("console.log", "Breaking out of loop ahead of time...");
 						break;
 					}
 
@@ -230,10 +228,8 @@ ExternalInterface.call("console.log", "Breaking out of loop ahead of time...");
 							nLoops = length & 0xFF;
 				}
 				data.position = next;
-ExternalInterface.call("console.log", "Starting again at: 0x" + next.toString(16).toUpperCase() + "; Bytes remaining: 0x" + data.bytesAvailable.toString(16).toUpperCase());
 			}
 			if (ostTrack >= 0) {
-ExternalInterface.call("console.log", "Value of ostTrack: 0x" + ostTrack.toString(16).toUpperCase());
 				var ostTrackChar:String = ascii_to_displayable_char(ostTrack & 0xFF);
 				ostTrack >>= 8;
 

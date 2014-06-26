@@ -101,9 +101,9 @@ package
 			this.fadeLength = fadeLength;
 			if (reload()) {
 				loadedURL = url;
-				ExternalInterface.call("ImoSPC._loaded", loadedURL);
+				ExternalInterface.call("ImoSPC._loaded", JSONHelper.escape(loadedURL));
 			} else {
-				ExternalInterface.call("ImoSPC._onloaderror", url);
+				ExternalInterface.call("ImoSPC._onloaderror", JSONHelper.escape(url));
 				swapDataPtrs();
 				this.fadeStart = oldFadeStart;
 				this.fadeLength = oldFadeLength;

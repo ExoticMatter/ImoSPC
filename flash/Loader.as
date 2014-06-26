@@ -14,10 +14,6 @@ package
 	public class Loader {
 		private var spc:SPC;
 
-		private function jslog(text: String) : void {
-			ExternalInterface.call("console.log", text);
-		}
-		
 		public function Loader(spc:SPC) {
 			this.spc = spc;
 
@@ -26,11 +22,11 @@ package
 		}
 
 		private static function sendLoadComplete(url:String, metadata:Array, corruptFiles:Array = null):void {
-			ExternalInterface.call("ImoSPC._ongetinfo", url, metadata, corruptFiles);
+			ExternalInterface.call("ImoSPC._ongetinfo", JSONHelper.escape(url), JSONHelper.escapeArrayArray(metadata), JSONHelper.escapeArray(corruptFiles));
 		}
 
 		private static function sendLoadError(url:String, reason:String, extra:* = null):void {
-			ExternalInterface.call("ImoSPC._onloaderror", url, reason, extra);
+			ExternalInterface.call("ImoSPC._onloaderror", JSONHelper.escape(url), reason, typeof extra === "string" ? JSONHelper.escape(extra) : extra);
 		}
 		
 		private function removeURLFragment(url:String):String {
@@ -43,6 +39,7 @@ package
 		}
 
 		private function getInfoAsync(url:String):void {
+			url = JSONHelper.unescape(url);
 			try {
 				var stream:LoaderHelper = new LoaderHelper(url);
 			} catch(e:Error) {
@@ -122,6 +119,8 @@ package
 		
 		private var loadingURL:String;
 		private function loadAsync(url:String, fadeStart:Number, fadeLength:Number):Boolean {
+			url = JSONHelper.unescape(url);
+
 			fadeStart *= SPC.SAMPLE_RATE;
 			fadeLength *= SPC.SAMPLE_RATE;
 			spc.stop(true);
@@ -129,7 +128,7 @@ package
 				spc.fadeStart = fadeStart;
 				spc.fadeLength = fadeLength;
 				spc.reload();
-				ExternalInterface.call("ImoSPC._loaded", url);
+				ExternalInterface.call("ImoSPC._loaded", JSONHelper.escape(url));
 				return true;
 			}
 			var baseURL:String = removeURLFragment(url);

@@ -969,7 +969,8 @@
 			var version = V_R_NONE;
 			
 			var autostart = false,
-				autoplay = true;
+				autoplay = true,
+				allowMultipleInstances = false;
 
 			Object.defineProperties(ImoSPC, {
 				'isFunctional': {
@@ -999,6 +1000,12 @@
 					'configurable': false,
 					'get': function() { return autoplay; },
 					'set': function(v) { autoplay = !!v; }
+				},
+				'allowMultipleInstances': {
+					'enumerable': true,
+					'configurable': false,
+					'get': function() { return allowMultipleInstances; },
+					'set': function(v) { allowMultipleInstances = !!v; }
 				}
 			});
 			
@@ -1015,6 +1022,7 @@
 			})(V_R_NONE);
 			ImoSPC['autostart'] = false;
 			ImoSPC['autoplay'] = true;
+			ImoSPC['allowMultipleInstances'] = false;
 		}
 
 		// Create event handler properties
@@ -1785,18 +1793,63 @@
 			else setTimeout(addSwfToBody, 100);
 		}
 
-		var _xmlEscapeMap = { '<': '&lt;', '>': '&gt;', '&': '&amp;' };
+		var _jsonEscapeMap = {
+			'&': '&amp;',
+			'\\': '&#x5C;',
+			'"': '&quot;',
+			"'": '&#x27;',
+			'\r': '&#x0D;',
+			'\n': '&#x0A;'
+		};
+
+		function _jsonEscape(match) {
+			return _jsonEscapeMap[match] || match;
+		}
+
+		function jsonEscape(str) {
+			return str.replace(/[&\\"'\r\n]/g, _jsonEscape);
+		}
+		
+		var _jsonUnescapeMap = {
+			'&amp;': '&',
+			'&#x5c;': '\\',
+			'&quot;': '"',
+			'&#x27;': "'",
+			'&#x0d;': '\r',
+			'&#x0a;': '\n'
+		};
+		
+		function _jsonUnescape(match) {
+			return _jsonUnescapeMap[match.toLowerCase()] || match;
+		}
+		
+		function jsonUnescape(str) {
+			return str.replace(/&(?:amp|quot|#x(?:5C|27|0D|0A));/gi, _jsonUnescape);
+		}
+		
+		function jsonUnescapeArray(array) {
+			if (array) for (var i = -1, ii = array.length; ++i < ii;) {
+				var s = array[i];
+				if (typeof s === "string") {
+					array[i] = jsonUnescape(s);
+				}
+			}
+			return array;
+		}
+		
+		function jsonUnescapeArrayArray(arrayArray) {
+			if (arrayArray) for (var i = -1, ii = arrayArray.length; ++i < ii;) {
+				var o = arrayArray[i];
+				if (Array.isArray(o)) {
+					jsonUnescapeArray(o);
+				}
+			}
+			return arrayArray;
+		}
+
 		var pendingLoadUserdata = new Hashtable();
 		var pauseImmediately;
 		var pendingPlaySeek;
-		
-		function _xmlEscape(match) {
-			return _xmlEscapeMap[match] || match;
-		}
-		
-		function xmlEscape(str) {
-			return String(str).replace(/[<>&]/g, _xmlEscape);
-		}
 		
 		function handleFlashBlocker() {
 			imoInvokeInitError(new ImoInitEvent(null_, E_FLASHBLOCK));
@@ -1831,7 +1884,7 @@
 					pendingPlayPlaylist = pendingPlayTrack = pendingPlaySeek =
 							pauseImmediately = pendingPlayTrackIndex=undefined_;
 				}
-				swf['_getinfo'](xmlEscape(url));
+				swf['_getinfo'](jsonEscape(url));
 			};
 			
 			_play = function(seekTo, track, playlist) {
@@ -1876,7 +1929,7 @@
 					pendingPlaySeek = seekTo;
 					
 					// Load and seek
-					if (!swf['_load'](xmlEscape(pendingPlayUrl), +track['_fSt'], +track['_fLn'])) {
+					if (!swf['_load'](jsonEscape(pendingPlayUrl), +track['_fSt'], +track['_fLn'])) {
 						imoInvokePlayStateChange(new ImoStateEvent(P_LOADING, pendingPlayTrack, pendingPlayPlaylist, pendingPlayTrackIndex, prevTrack, prevIndex));
 					} else if (0) { // Don't bother, since the SWF will call _loaded()
 						_curTrack = track;
@@ -1941,6 +1994,7 @@
 				'unkty': E_UNKNOWN_FILE_TYPE,
 				'badurl': E_BAD_URL,
 				'dlerr': E_DOWNLOAD_ERROR,
+				'http': E_DOWNLOAD_ERROR,
 				'security': E_DOWNLOAD_ERROR,
 				'dlabt': E_DOWNLOAD_ABORTED, // not used
 				'nofile': E_PATH_NOT_FOUND,
@@ -1949,6 +2003,10 @@
 			
 			setOtherFlashCallbacks(function(url, tracks, corruptFiles) {
 				// _ongetinfo()
+				url = jsonUnescape(url);
+				jsonUnescapeArrayArray(tracks);
+				jsonUnescapeArray(corruptFiles);
+
 				var userdata = pendingLoadUserdata.remove(url);
 				if (!tracks.length) {
 					imoInvokeLoadError(new ImoLoadEvent(url, userdata, undefined_, undefined_, corruptFiles, E_EMPTY_ARCHIVE));
@@ -1974,6 +2032,8 @@
 				}
 			}, function(url) {
 				// _loaded()
+				url = jsonUnescape(url);
+
 				if (url === pendingPlayUrl) {
 					var seekTo = pendingPlaySeek;
 					
@@ -1992,6 +2052,9 @@
 				}
 			}, function(url, reason, extra) {
 				// _onloaderror()
+				url = jsonUnescape(url);
+				if (typeof extra === "string") extra = jsonUnescape(extra);
+
 				var e = ECONV[reason];
 				if (DEBUG && !e) { console.log('Unknown error: ' + reason); }
 				
@@ -2074,6 +2137,7 @@
 		if (options) {
 			if ('autoplay' in options) ImoSPC['autoplay'] = !!options['autoplay'];
 			if ('autostart' in options) ImoSPC['autostart'] = !!options['autostart'];
+			if ('allowMultipleInstances' in options) ImoSPC['allowMultipleInstances'] = !!options['allowMultipleInstances'];
 		}
 
 		if (isFlashSupported && !(options && 'preferredRuntime' in options && options['preferredRuntime'] === R_HTML5)) {
