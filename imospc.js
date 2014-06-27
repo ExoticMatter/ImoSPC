@@ -1928,9 +1928,11 @@
 					pendingPlayTrackIndex = trackIndex;
 					pendingPlaySeek = seekTo;
 					
+					// Always send the LOADING event, even if the track gets loaded immediately
+					imoInvokePlayStateChange(new ImoStateEvent(P_LOADING, pendingPlayTrack, pendingPlayPlaylist, pendingPlayTrackIndex, prevTrack, prevIndex));
 					// Load and seek
 					if (!swf['_load'](jsonEscape(pendingPlayUrl), +track['_fSt'], +track['_fLn'])) {
-						imoInvokePlayStateChange(new ImoStateEvent(P_LOADING, pendingPlayTrack, pendingPlayPlaylist, pendingPlayTrackIndex, prevTrack, prevIndex));
+						// nothing to do
 					} else if (0) { // Don't bother, since the SWF will call _loaded()
 						_curTrack = track;
 						_curPlaylist = playlist;
