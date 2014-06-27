@@ -183,6 +183,9 @@ inline void SPC_DSP::run_counter( int i )
 
 //// Emulation
 
+// Double the volume
+#define VOLUME_MULTIPLIER 2
+
 void SPC_DSP::run( int clock_count )
 {
 	int new_phase = m.phase + clock_count;
@@ -197,8 +200,8 @@ void SPC_DSP::run( int clock_count )
 	int const noise_rate = REG(flg) & 0x1F;
 	
 	// Global volume
-	int mvoll = (int8_t) REG(mvoll);
-	int mvolr = (int8_t) REG(mvolr);
+	int mvoll = (int8_t) REG(mvoll) * VOLUME_MULTIPLIER;
+	int mvolr = (int8_t) REG(mvolr) * VOLUME_MULTIPLIER;
 	if ( mvoll * mvolr < m.surround_threshold )
 		mvoll = -mvoll; // eliminate surround
 	
@@ -606,8 +609,8 @@ skip_brr:
 		}
 		
 		// Sound out
-		int l = (main_out_l * mvoll + echo_in_l * (int8_t) REG(evoll)) >> 14;
-		int r = (main_out_r * mvolr + echo_in_r * (int8_t) REG(evolr)) >> 14;
+		int l = (main_out_l * mvoll + echo_in_l * ((int8_t) REG(evoll) * VOLUME_MULTIPLIER)) >> 14;
+		int r = (main_out_r * mvolr + echo_in_r * ((int8_t) REG(evolr) * VOLUME_MULTIPLIER)) >> 14;
 		
 		CLAMP16( l );
 		CLAMP16( r );
