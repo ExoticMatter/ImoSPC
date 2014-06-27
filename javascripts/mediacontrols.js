@@ -239,25 +239,31 @@ ImoSPC.onloaderror = function(e) {
 ImoSPC.onplaystatechange = function(e) {
     var PS = ImoSPC.PlaybackState;
     switch (e.state) {
-        case PS.PLAYING:
-            timerOn();
         case PS.LOADING:
+            function updateMediaButtons()
+            {
+                var hasNoPrev = !e.playlist.previous();
+                var hasNoNext = !e.playlist.next();
+                first.button('option', 'disabled', hasNoPrev);
+                prev.button('option', 'disabled', hasNoPrev);
+                play.button('option', 'disabled', false);
+                stop.button('option', 'disabled', false);
+                next.button('option', 'disabled', hasNoNext);
+                last.button('option', 'disabled', hasNoNext);
+            }
             seekbar.progressbar('option', 'max', e.track.length);
-
-            var hasNoPrev = !e.playlist.previous();
-            var hasNoNext = !e.playlist.next();
-            first.button('option', 'disabled', hasNoPrev);
-            prev.button('option', 'disabled', hasNoPrev);
-            play.button('option', 'disabled', false);
-            stop.button('option', 'disabled', false);
-            next.button('option', 'disabled', hasNoNext);
-            last.button('option', 'disabled', hasNoNext);
 
             setDisplayedTime(curTimeDisplay, 0);
             setDisplayedTime(lengthDisplay, e.track.length);
 
             setIsPlaying(true);
+            updateMediaButtons();
             ticker.ticker({ items: getTickerItemsForMetadata(e.track, e.playlist, e.index) });
+        case PS.PLAYING:
+            timerOn();
+            setIsPlaying(true);
+            updateMediaButtons();
+            break;
 
         case PS.BUFFERING:
             timerOff(true);
