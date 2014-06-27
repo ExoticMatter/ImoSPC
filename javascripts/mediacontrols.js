@@ -239,6 +239,8 @@ ImoSPC.onloaderror = function(e) {
 ImoSPC.onplaystatechange = function(e) {
     var PS = ImoSPC.PlaybackState;
     switch (e.state) {
+        case PS.PLAYING:
+            timerOn();
         case PS.LOADING:
             seekbar.progressbar('option', 'max', e.track.length);
 
@@ -259,11 +261,6 @@ ImoSPC.onplaystatechange = function(e) {
 
         case PS.BUFFERING:
             timerOff(true);
-            break;
-
-        case PS.PLAYING:
-            timerOn();
-            setIsPlaying(true);
             break;
 
         case PS.PAUSED:
