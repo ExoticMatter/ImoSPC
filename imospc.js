@@ -1794,12 +1794,15 @@
 		}
 
 		var _jsonEscapeMap = {
-			'&': '&amp;',
-			'\\': '&#x5C;',
-			'"': '&quot;',
-			"'": '&#x27;',
-			'\r': '&#x0D;',
-			'\n': '&#x0A;'
+			'$': '$24',
+			'&': '$26',
+			'<': '$3C',
+			'>': '$3E',
+			'\\': '$5C',
+			'"': '$22',
+			"'": '$27',
+			'\r': '$0D',
+			'\n': '$0A'
 		};
 
 		function _jsonEscape(match) {
@@ -1807,24 +1810,15 @@
 		}
 
 		function jsonEscape(str) {
-			return str.replace(/[&\\"'\r\n]/g, _jsonEscape);
+			return str.replace(/[$&\\<>"'\r\n]/g, _jsonEscape);
 		}
 		
-		var _jsonUnescapeMap = {
-			'&amp;': '&',
-			'&#x5c;': '\\',
-			'&quot;': '"',
-			'&#x27;': "'",
-			'&#x0d;': '\r',
-			'&#x0a;': '\n'
-		};
-		
-		function _jsonUnescape(match) {
-			return _jsonUnescapeMap[match.toLowerCase()] || match;
+		function _jsonUnescape(match, hex) {
+			return String.fromCharCode(parseInt(hex, 16));
 		}
 		
 		function jsonUnescape(str) {
-			return str.replace(/&(?:amp|quot|#x(?:5C|27|0D|0A));/gi, _jsonUnescape);
+			return str.replace(/\$([a-f0-9A-F]{2,2})/g, _jsonUnescape);
 		}
 		
 		function jsonUnescapeArray(array) {

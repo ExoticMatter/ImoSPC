@@ -4,12 +4,15 @@ package
 
 	public class JSONHelper {
 		private static var escapeMap:Object = {
-			'&': '&amp;',
-			'\\': '&#x5C;',
-			'"': '&quot;',
-			"'": '&#x27;',
-			'\r': '&#x0D;',
-			'\n': '&#x0A;'
+			'$': '$24',
+			'&': '$26',
+			'<': '$3C',
+			'>': '$3E',
+			'\\': '$5C',
+			'"': '$22',
+			"'": '$27',
+			'\r': '$0D',
+			'\n': '$0A'
 		};
 
 		private static function _escape(match:String, ...args):String {
@@ -17,7 +20,7 @@ package
 		}
 
 		public static function escape(str:String):String {
-			return str.replace(/[&\\"'\r\n]/g, _escape);
+			return str.replace(/[$&\\<>"'\r\n]/g, _escape);
 		}
 		
 		public static function escapeArray(array:Array):Array {
@@ -39,22 +42,13 @@ package
 			}
 			return arrayArray;
 		}
-
-		private static var unescapeMap:Object = {
-			'&amp;': '&',
-			'&#x5c;': '\\',
-			'&quot;': '"',
-			'&#x27;': "'",
-			'&#x0d;': '\r',
-			'&#x0a;': '\n'
-		};
 		
-		private static function _unescape(match:String, ...args):String {
-			return unescapeMap[match.toLowerCase()] || match;
+		private static function _unescape(match:String, hex:String, ...args):String {
+			return String.fromCharCode(parseInt(hex, 16));
 		}
 		
 		public static function unescape(str:String):String {
-			return str.replace(/&(?:amp|quot|#x(?:5C|27|0D|0A));/gi, _unescape);
+			return str.replace(/\$([a-f0-9A-F]{2,2})/g, _unescape);
 		}
 		
 		public static function unescapeArray(array:Array):Array {
