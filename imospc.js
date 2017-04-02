@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (C) 2014 ExoticMatter
+ * Copyright (C) 2017 ExoticMatter
  *
  * This file is part of ImoSPC.
  *
@@ -20,7 +20,7 @@
 	"use strict";
 
 	/** @const */ var IMO_VERSION_MAJOR = 1;
-	/** @const */ var IMO_VERSION_MINOR = 9;
+	/** @const */ var IMO_VERSION_MINOR = 10;
 	/** @const */ var IMO_VERSION_BUILD = 1;
 
 	var undefined_;
@@ -705,7 +705,7 @@
 	// _play: function(seekTo, track, playlist)
 
 	var volume = 1;
-	var _open, _play, _pause, _unpause, _stop, _getTime, _setVolume;
+	var _open, _play, _pause, _unpause, _stop, _getTime, _setVolume, _setLoop;
 	var _curPlaylist, _curTrack, _curTrackIndex;
 	// Keep these separate from the currently playing stuff
 	// The URL is kept here as well, since objects can't be sent to workers.
@@ -953,6 +953,8 @@
 			return volume;
 		},
 
+		'setRepeat': function(l) { _setLoop(!!l); },
+
 		'canSeek': true,
 		'canSetVolume': true,
 
@@ -1076,7 +1078,7 @@
 		// audio context's time to get the current playback position.
 		var nextBufferStart, timeCorrectionFactor, pauseTime;
 		var pendingBuffers = [], oldBuffers = [];
-		var fadeStart, trackEnd, wasFadeSet, wasPlayBufferingMessageSent;
+		var fadeStart, trackEnd, wasFadeSet, wasPlayBufferingMessageSent, loop;
 		// How many samp requests have not been received?
 		// This number can help _play() guess if a seek request should be
 		// dropped.
@@ -1322,7 +1324,7 @@
 				var neededBuffers = MAX_PENDING_BUFFERS - waitingBuffers;
 				
 				var recycledBuffer;
-				while (neededBuffers-- > 0 && requestedBufferStartTime < literalTrackEnd) {
+				while (neededBuffers-- > 0 && (requestedBufferStartTime < literalTrackEnd || loop)) {
 					if (oldBuffers.length > MAX_OLD_BUFFERS) {
 						recycledBuffer = oldBuffers.shift();
 						if (!canTransfer) recycledBuffer = undefined_;
@@ -1339,7 +1341,7 @@
 			if (!_curTrack) throw new Error('No track is loaded.');
 			
 			// End the track once the audio stops.
-			if (audioContext.currentTime + timeCorrectionFactor >= trackEnd)
+			if (!loop && audioContext.currentTime + timeCorrectionFactor >= trackEnd)
 				return endTrack(), undefined_;
 			
 			var time = oEvt.playbackTime;
@@ -1362,7 +1364,7 @@
 				for (var i = -1, ii = outputBuffer.length; ++i < ii;)
 					outL[i] = outR[i] = 0;
 				// Don't issue P_BUFFERING when the track ends.
-				if (time + timeCorrectionFactor < trackEnd && (!isStarved || !wasPlayBufferingMessageSent)) {
+				if ((time + timeCorrectionFactor < trackEnd || loop) && (!isStarved || !wasPlayBufferingMessageSent)) {
 					isStarved = 1;
 					wasPlayBufferingMessageSent = 1;
 					// Starvation will cause the time correction factor to
@@ -1394,7 +1396,7 @@
 					resetTimer = 0;
 					timeCorrectionFactor = nextBufferStartSeconds - time;
 					//clearFade(); // Don't do it here, causes audio glitches(?)
-					setNextFade();
+					if (!loop) setNextFade();
 				}
 				
 				var source = new Int16Array(data);
@@ -1485,7 +1487,7 @@
 				seekTo += maxTime;
 				// -Infinity will start at zero.
 				if (seekTo < 0) seekTo = 0;
-			} else if (seekTo >= maxTime) {
+			} else if (seekTo >= maxTime && !loop) {
 				// If seeking beyond the end of the track, stop.
 				// However, in a playlist, skip to the next track.
 				if (playlist && ++trackIndex < playlist['tracks'].length) {
@@ -1517,7 +1519,7 @@
 				loader.postMessage({ 'msg': 'load', 'at': seekTo, 'url': pendingPlayUrl, 'ofs': track['_ofs'] });
 				imoInvokePlayStateChange(new ImoStateEvent(P_LOADING, track, playlist, trackIndex, previousTrack, previousIndex));
 			} else {
-				// TODO: Perform a seek without reloading the current track.
+				// Perform a seek without reloading the current track.
 				// Also, return true so that endTrack() knows when to not set
 				// _curTrack to undefined.
 				var nextBufferStart_ = nextBufferStart; // copy
@@ -1668,6 +1670,13 @@
 			if (masterGain)
 				masterGain.gain['value'] = vol;
 		};
+
+		_setLoop = function(l) {
+			loop = l;
+			if (_curTrack && !_isPaused) {
+				if (l) clearFade(); else setNextFade();
+			}
+		}
 		
 		setVersion(V_R_HTML5);
 		setIsFunctional(true);
@@ -1983,6 +1992,10 @@
 				swf['_setVol'](v);
 			};
 			
+			_setLoop = function(l) {
+				swf['_setLoop'](l);
+			};
+
 			var ECONV = {
 				'badspc': E_INVALID_SPC,
 				'badzip': E_INVALID_ZIP,

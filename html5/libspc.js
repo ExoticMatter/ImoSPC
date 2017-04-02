@@ -86,18 +86,7 @@
 
 		_imo_run(outputBuffer, bufLen << 1); // multiply by 2 for stereo
 
-		// Copy the output data into a 32-bit floating-point buffer.
-		//var arr = new ArrayBuffer(bufLen * 2 * 4); // 2 for stereo, 4 for float
-		//var outL = new Float32Array(arr, 0, bufLen);
-		//var outR = new Float32Array(arr, bufLen * 4, bufLen);
-
-		//var i = 0, j = outputBuffer >> 1;
-		//do {
-		//	outL[i] = (HEAP16[j = j + 1 | 0] | 0) / 0x8000;
-		//	outR[i] = (HEAP16[j = j + 1 | 0] | 0) / 0x8000;
-		//} while ((i = i + 1 | 0) < bufLen);
-
-		// New method: copy 16-bit int buffers to the main thread, and convert
+		// copy 16-bit int buffers to the main thread, and convert
 		// them to 32-bit float when loading them into the script processor.
 		// Recycle a provided ArrayBuffer, if possible.
 		var byteLen = bufLen << 2;
@@ -127,21 +116,21 @@
 	};
 
 	self['onmessage'] = function(data) {
-	    data = data.data;
+		data = data.data;
 		switch (data['msg']) {
 			case 'setr':
-			    var tmp = data['rate'];
-			    if (tmp) _imo_set_sample_rate(sampleRate = Number(tmp));
-			    tmp = data['len'];
-			    if (tmp) {
-			        tmp = Number(tmp);
-			        if (tmp <= 256) tmp = 256;
-			        else if (tmp > sampleRate >>> 0) tmp = sampleRate >>> 0;
+				var tmp = data['rate'];
+				if (tmp) _imo_set_sample_rate(sampleRate = Number(tmp));
+				tmp = data['len'];
+				if (tmp) {
+					tmp = Number(tmp);
+					if (tmp <= 256) tmp = 256;
+					else if (tmp > sampleRate >>> 0) tmp = sampleRate >>> 0;
 
-			        var newBuffer = _realloc(outputBuffer, tmp << 2);
-			        if (newBuffer) {
-			        	bufLen = tmp;
-			        	outputBuffer = newBuffer;
+					var newBuffer = _realloc(outputBuffer, tmp << 2);
+					if (newBuffer) {
+						bufLen = tmp;
+						outputBuffer = newBuffer;
 					}
 				}
 				break;
@@ -171,7 +160,7 @@
 					}), url = null_;
 				break;
 			case 'samp':
-			    if (!verifyRequestLoaded(data)) break;
+				if (!verifyRequestLoaded(data)) break;
 
 				if (seekTimer) {
 					blocksAfterSeek++;
@@ -180,7 +169,7 @@
 				}
 				break;
 			case 'seek':
-			    if (!verifyRequestLoaded(data)) break;
+				if (!verifyRequestLoaded(data)) break;
 
 				var seekTarget = +data['to'];
 				if (isNaN(seekTarget) || seekTarget < 0) {
@@ -188,6 +177,7 @@
 				} else {
 					performSeek(seekTarget);
 				}
+				break;
 		}
 	};
 }());

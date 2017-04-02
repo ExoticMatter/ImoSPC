@@ -38,8 +38,9 @@ package
 		private var trackLength:Number;
 		// Add this to channel.position, and you get the result of tell().
 		private var playbackStartTime:Number;
+		private var loop:Boolean;
 
-	    private var seekTimer:Timer;
+		private var seekTimer:Timer;
 		private var seekDestination:Number;
 		private const SEEK_INCREMENT:int = SAMPLE_RATE << 1; // 2 seconds
 
@@ -72,6 +73,7 @@ package
 			ExternalInterface.addCallback("_tell", tell);
 			ExternalInterface.addCallback("_setVol", setVolume);
 			ExternalInterface.addCallback("_getVol", getVolume);
+			ExternalInterface.addCallback("_setLoop", setLoop);
 
 			ExternalInterface.addCallback("_start", start);
 			ExternalInterface.addCallback("_pause", pause);
@@ -86,6 +88,11 @@ package
 
 			dataptr = b;
 			extradataptr = a;
+		}
+
+		public function setLoop(loop:Boolean):void {
+			this.loop = loop;
+			ImoSPC.setFadeEnabled(!loop);
 		}
 
 		public function setFile(url:String, data:ByteArray, fadeStart:Number, fadeLength:Number):void {
@@ -311,7 +318,7 @@ package
 		}
 
 		private function onSampleData(event:SampleDataEvent):void {
-			if (emulatorPos >= trackLength) {
+			if (!this.loop && emulatorPos >= trackLength) {
 				return;
 			}
 

@@ -19,6 +19,8 @@ double _time;
 double _fadeStart;
 double _fadeStep;
 
+bool _enableFade = true;
+
 // Fading
 // int_log and handle_fade are from Game Music Emu.
 // http://www.slack.net/~ant/libs/audio.html#Game_Music_Emu
@@ -104,7 +106,7 @@ void as3_imo_run()
 		"%1 = count;" : "=r"(ob), "=r"(i));
 
 	imo_run(ob, i);
-	if (_time > _fadeStart)
+	if (_enableFade && _time > _fadeStart)
 		handle_fade(i, ob);
 
 	_time += i;
@@ -120,6 +122,14 @@ void as3_imo_skip()
 	inline_as3("%0 = count;" : "=r"(i));
 	imo_skip(i);
 	_time += i;
+}
+
+void as3_imo_set_fade_enabled() __attribute__((used,
+	annotate("as3sig:public function setFadeEnabled(enabled:Boolean):void"),
+	annotate("as3package:ImoSPC")));
+void as3_imo_set_fade_enabled()
+{
+	inline_as3("%0 = enabled;" : "=r"(_enableFade));
 }
 
 int main()
