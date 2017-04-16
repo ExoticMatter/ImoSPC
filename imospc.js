@@ -28,9 +28,9 @@
 
 	/** @const */ var DEBUG = false;
 
-	/** @const */ var IMO_UNZIP_WORKER	= 'imo-w-unzip.js';
-	/** @const */ var IMO_SPC_WORKER	= 'imo-w-spc.js';
-	/** @const */ var IMO_FLASH_SWF		= 'imo-fl.swf';
+	/** @const */ var IMO_UNZIP_WORKER	= 'bin/imo-w-unzip.js';
+	/** @const */ var IMO_SPC_WORKER	= 'bin/imo-w-spc.js';
+	/** @const */ var IMO_FLASH_SWF		= 'bin/imo-fl.swf';
 
 	// Allow some constructors to be inherently uncallable.
 	function defineUnconstructable(proto) {
