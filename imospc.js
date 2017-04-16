@@ -1103,9 +1103,11 @@
 			fadeGain.connect(masterGain);
 			
 			var v_string = createVersionString(IMO_VERSION_MAJOR, IMO_VERSION_MINOR, IMO_VERSION_BUILD);
-				
-			loader = new Worker(relativeToScript(IMO_UNZIP_WORKER));
-			player = new Worker(relativeToScript(IMO_SPC_WORKER));
+			
+			var loaderObjectUrl = getObjectUrl(relativeToScript(IMO_UNZIP_WORKER));
+			loader = new Worker(loaderObjectUrl);
+			var playerObjectUrl = getObjectUrl(relativeToScript(IMO_SPC_WORKER));
+			player = new Worker(playerObjectUrl);
 
 			loader['onmessage'] = unzipMsgProc;
 			player['onmessage'] = spcMsgProc;
@@ -1118,6 +1120,20 @@
 			canTransfer = !test.length;
 			
 			initialize = doNothing;
+		}
+		
+		function getObjectUrl(url) {
+			var response;
+			var get = new XMLHttpRequest();
+			get.open("GET", url, true);
+			get.onreadystatechange = function() {
+				if(get.readyState == 4 && get.status == 200) {
+					response = get.responseText;
+				}
+			}
+			get.send();
+			var blob = new Blob([response], {type: 'application/javascript'});
+			return URL.createObjectURL(blob)
 		}
 		
 		//</editor-fold>
