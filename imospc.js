@@ -1103,23 +1103,43 @@
 			fadeGain.connect(masterGain);
 			
 			var v_string = createVersionString(IMO_VERSION_MAJOR, IMO_VERSION_MINOR, IMO_VERSION_BUILD);
-				
-			loader = new Worker(relativeToScript(IMO_UNZIP_WORKER));
-			player = new Worker(relativeToScript(IMO_SPC_WORKER));
-
-			loader['onmessage'] = unzipMsgProc;
-			player['onmessage'] = spcMsgProc;
 			
-			//loader.postMessage({ 'msg': 'base', 'url': location.href });
-			player.postMessage({ 'msg': 'setr', 'rate': sampleRate = audioContext.sampleRate });
-			
-			var test = new ArrayBuffer(1);
-			player.postMessage({ 'msg': 'test', 'x': test }, [test]);
-			canTransfer = !test.length;
-			
-			initialize = doNothing;
+			return getObjectUrl(relativeToScript(IMO_UNZIP_WORKER))
+				.then(function(objUrl) {
+					loader = new Worker(objUrl);
+					loader['onmessage'] = unzipMsgProc;
+					//loader.postMessage({ 'msg': 'base', 'url': location.href });
+				})
+				.then(function() {
+					return getObjectUrl(relativeToScript(IMO_SPC_WORKER))
+						.then(function(objUrl) {
+							player = new Worker(objUrl);
+							player['onmessage'] = spcMsgProc;
+							player.postMessage({ 'msg': 'setr', 'rate': sampleRate = audioContext.sampleRate });
+							var test = new ArrayBuffer(1);
+							player.postMessage({ 'msg': 'test', 'x': test }, [test]);
+							canTransfer = !test.length;
+						})
+					})
+				.then(function(){ 
+					initialize = function() { return $.when(); }
+				});
 		}
 		
+		function getObjectUrl(url) {
+			return new Promise(function(resolve, reject) {
+				var xhr = new XMLHttpRequest();
+				xhr.open('GET', url, true);
+				xhr.onload = function() {
+					var response = xhr.responseText;
+					var blob = new Blob([response], {type: 'application/javascript'});
+					var objUrl = URL.createObjectURL(blob);
+					resolve(objUrl);
+				};
+				xhr.onerror = reject;
+				xhr.send();
+			});
+		}
 		//</editor-fold>
 		
 		//<editor-fold defaultstate="collapsed" desc="Worker error codes to API error codes">
@@ -1475,100 +1495,101 @@
 			// Seeking beyond the end of a track will stop the track.
 			// Seeking to a negative position will seek that far from the end of
 			// the track.
-			initialize();
-			takeControl();
-			
-			var trackIndex = playlist ? track : undefined_;
-			if (playlist) track = playlist['tracks'][trackIndex];
-			
-			var maxTime = track['length'];
-			// Negative seekTo means you start that many seconds from the end.
-			if (seekTo < 0) {
-				seekTo += maxTime;
-				// -Infinity will start at zero.
-				if (seekTo < 0) seekTo = 0;
-			} else if (seekTo >= maxTime && !loop) {
-				// If seeking beyond the end of the track, stop.
-				// However, in a playlist, skip to the next track.
-				if (playlist && ++trackIndex < playlist['tracks'].length) {
-					seekTo = 0;
-					track = playlist['tracks'][trackIndex];
-				} else return _stop(), undefined_;
-			}
-			
-			if (track !== _curTrack) {
-				var previousTrack, previousIndex;
+			initialize().done(function() {
+				takeControl();
 				
-				if (!playlist || playlist !== _curPlaylist) {
-					_stop();
+				var trackIndex = playlist ? track : undefined_;
+				if (playlist) track = playlist['tracks'][trackIndex];
+				
+				var maxTime = track['length'];
+				// Negative seekTo means you start that many seconds from the end.
+				if (seekTo < 0) {
+					seekTo += maxTime;
+					// -Infinity will start at zero.
+					if (seekTo < 0) seekTo = 0;
+				} else if (seekTo >= maxTime && !loop) {
+					// If seeking beyond the end of the track, stop.
+					// However, in a playlist, skip to the next track.
+					if (playlist && ++trackIndex < playlist['tracks'].length) {
+						seekTo = 0;
+						track = playlist['tracks'][trackIndex];
+					} else return _stop(), undefined_;
+				}
+				
+				if (track !== _curTrack) {
+					var previousTrack, previousIndex;
+					
+					if (!playlist || playlist !== _curPlaylist) {
+						_stop();
+					} else {
+						previousTrack = _curTrack;
+						previousIndex = _curTrackIndex;
+						stopWithoutClearing();
+					}
+					// Because either 1.) a different track is playing or 2.) a
+					// different track is currently being loaded, the specified
+					// track needs to be re-loaded by the worker.
+					pendingPlayUrl = track['url'];
+					pendingPlayTrack = track;
+					pendingPlayPlaylist = playlist;
+					pendingPlayTrackIndex = trackIndex;
+					
+					_isPaused = 0; // Don't stay paused
+					
+					loader.postMessage({ 'msg': 'load', 'at': seekTo, 'url': pendingPlayUrl, 'ofs': track['_ofs'] });
+					imoInvokePlayStateChange(new ImoStateEvent(P_LOADING, track, playlist, trackIndex, previousTrack, previousIndex));
 				} else {
-					previousTrack = _curTrack;
-					previousIndex = _curTrackIndex;
-					stopWithoutClearing();
-				}
-				// Because either 1.) a different track is playing or 2.) a
-				// different track is currently being loaded, the specified
-				// track needs to be re-loaded by the worker.
-				pendingPlayUrl = track['url'];
-				pendingPlayTrack = track;
-				pendingPlayPlaylist = playlist;
-				pendingPlayTrackIndex = trackIndex;
-				
-				_isPaused = 0; // Don't stay paused
-				
-				loader.postMessage({ 'msg': 'load', 'at': seekTo, 'url': pendingPlayUrl, 'ofs': track['_ofs'] });
-				imoInvokePlayStateChange(new ImoStateEvent(P_LOADING, track, playlist, trackIndex, previousTrack, previousIndex));
-			} else {
-				// Perform a seek without reloading the current track.
-				// Also, return true so that endTrack() knows when to not set
-				// _curTrack to undefined.
-				var nextBufferStart_ = nextBufferStart; // copy
-				var seekToSample = Math.floor(seekTo * sampleRate);
-				var manualSeek;
-				if (seekToSample < nextBufferStart_) {
-					// Try to re-use old buffers, if possible, instead of doing
-					// an actual seek.
-					while (oldBuffers.length) {
-						pendingBuffers.unshift(oldBuffers.pop());
-						nextBufferStart_ -= BUFFER_LENGTH;
-						if (nextBufferStart_ <= seekToSample) {
-							nextBufferStart = nextBufferStart_;
-							resetTimer = 1;
-							clearFade();
-							return;
+					// Perform a seek without reloading the current track.
+					// Also, return true so that endTrack() knows when to not set
+					// _curTrack to undefined.
+					var nextBufferStart_ = nextBufferStart; // copy
+					var seekToSample = Math.floor(seekTo * sampleRate);
+					var manualSeek;
+					if (seekToSample < nextBufferStart_) {
+						// Try to re-use old buffers, if possible, instead of doing
+						// an actual seek.
+						while (oldBuffers.length) {
+							pendingBuffers.unshift(oldBuffers.pop());
+							nextBufferStart_ -= BUFFER_LENGTH;
+							if (nextBufferStart_ <= seekToSample) {
+								nextBufferStart = nextBufferStart_;
+								resetTimer = 1;
+								clearFade();
+								return;
+							}
 						}
-					}
-					manualSeek = 1;
-				} else if (seekToSample > nextBufferStart_) {
-					// Don't issue a seek operation if the samples have already
-					// been received.
-					while (pendingBuffers.length) {
-						if (nextBufferStart_ + BUFFER_LENGTH >= seekToSample) {
-							nextBufferStart = nextBufferStart_;
-							resetTimer = 1;
-							clearFade();
-							return;
+						manualSeek = 1;
+					} else if (seekToSample > nextBufferStart_) {
+						// Don't issue a seek operation if the samples have already
+						// been received.
+						while (pendingBuffers.length) {
+							if (nextBufferStart_ + BUFFER_LENGTH >= seekToSample) {
+								nextBufferStart = nextBufferStart_;
+								resetTimer = 1;
+								clearFade();
+								return;
+							}
+							oldBuffers.push(pendingBuffers.shift());
+							nextBufferStart_ += BUFFER_LENGTH;
 						}
-						oldBuffers.push(pendingBuffers.shift());
-						nextBufferStart_ += BUFFER_LENGTH;
+						// Check if the buffers that are waiting to be received
+						// can be used.
+						var unreceivedBuffersLength = nUnreceivedBuffers * BUFFER_LENGTH;
+						manualSeek = (nextBufferStart_ + unreceivedBuffersLength < seekToSample);
 					}
-					// Check if the buffers that are waiting to be received
-					// can be used.
-					var unreceivedBuffersLength = nUnreceivedBuffers * BUFFER_LENGTH;
-					manualSeek = (nextBufferStart_ + unreceivedBuffersLength < seekToSample);
+					if (manualSeek) {
+						clearFade();
+						//nUnreceivedSeeks++;
+						clearArray(pendingBuffers);
+						clearArray(oldBuffers);
+						nUnreceivedBuffers = 0;
+						resetTimer = 1;
+						player.postMessage({ 'msg': 'seek', 'url': track['url'], 'to': nextBufferStart = seekToSample });
+						fetchMoreSamples();
+					}
+					_unpause(); // Simply setting _isPaused to false won't work here
 				}
-				if (manualSeek) {
-					clearFade();
-					//nUnreceivedSeeks++;
-					clearArray(pendingBuffers);
-					clearArray(oldBuffers);
-					nUnreceivedBuffers = 0;
-					resetTimer = 1;
-					player.postMessage({ 'msg': 'seek', 'url': track['url'], 'to': nextBufferStart = seekToSample });
-					fetchMoreSamples();
-				}
-				_unpause(); // Simply setting _isPaused to false won't work here
-			}
+			});
 		};
 		
 		_pause = function() {
@@ -1650,20 +1671,20 @@
 				pendingLoadUserdata.add(url, userdata);
 			}
 
-			initialize();
-
-			// If playing the opened file automatically, set the pending
-			// play URL as a way of verifying that the user doesn't set
-			// play something else while the loading is taking place.
-			//
-			// Also, stop playing whatever was previously playing when using
-			// autostart.
-			if (autostart) {
-				_stop();
-				pendingPlayTrack = pendingPlayPlaylist = pendingPlayTrackIndex = null_;
-				pendingPlayUrl = url;
-			}
-			loader.postMessage({ 'msg': 'info', 'url': url, 'ap': autostart, 'u': hasUserdata });
+			initialize().then(function() {
+				// If playing the opened file automatically, set the pending
+				// play URL as a way of verifying that the user doesn't set
+				// play something else while the loading is taking place.
+				//
+				// Also, stop playing whatever was previously playing when using
+				// autostart.
+				if (autostart) {
+					_stop();
+					pendingPlayTrack = pendingPlayPlaylist = pendingPlayTrackIndex = null_;
+					pendingPlayUrl = url;
+				}
+				loader.postMessage({ 'msg': 'info', 'url': url, 'ap': autostart, 'u': hasUserdata });
+			});
 		};
 
 		_setVolume = function(vol) {
