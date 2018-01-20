@@ -1296,7 +1296,7 @@
 			timeCorrectionFactor = -1 / 0; // -Infinity
 			_isPaused = 0;
 			
-			fadeGain.gain['value'] = 1;
+			fadeGain.gain.setValueAtTime(1, 0); // FF bug; setting gain.['value'] does nothing after linearRampToValueAtTime()
 			outputNode = audioContext.createScriptProcessor(BUFFER_LENGTH, 0, 2);
 			outputNode['onaudioprocess'] = processAudio;
 			outputNode.connect(fadeGain);
