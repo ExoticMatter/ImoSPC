@@ -1,6 +1,8 @@
 ImoSPC
 ======
 
+This repo is no longer maintained.  There is an active fork: https://github.com/Jerther/ImoSPC
+
 ImoSPC provides an API for playing [SPC] files and Zip archives, as well as reading SPC metadata, using JavaScript.
 
 - [More Information](https://github.com/ShadowFan-X/ImoSPC/wiki)
